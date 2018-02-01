@@ -17,6 +17,7 @@ pipeline {
                 stage('Unit Test') {
                         steps {
                         echo 'Unit Test!!!'
+			sh 'mvn test'
                         }
                     }
                 stage('Integration Tests!') {
@@ -29,11 +30,13 @@ pipeline {
         stage('Static Analysis'){
                 steps {
                     echo 'Static Analysis'
+		    sh 'mvn checkstyle:checkstyle'
                 }
             }
         stage('Deploy to Artifactory'){
                 steps {
                     echo 'Deploy to Artifactory'
+		    sh 'mvn deploy'
                 }
             }
         stage('Deploy - REL'){
@@ -48,9 +51,7 @@ pipeline {
         }
         stage('Deploy - FST'){
                 when {
-                    expression {
-                        params.DEPLOY_TO_FST == true
-                    }
+		     branch 'master'
                 }
                 steps {
                         timeout(time:5, unit:'MINUTES') {
@@ -61,9 +62,7 @@ pipeline {
         }
         stage('Deploy - IST'){
                 when {
-                    expression {
-                        params.DEPLOY_TO_IST == true
-                    }
+		     branch 'master'
                 }
                 steps {
                         timeout(time:5, unit:'MINUTES') {
@@ -74,9 +73,7 @@ pipeline {
         }
         stage('Deploy - PRE_PROD'){
                 when {
-                    expression {
-                        params.DEPLOY_TO_PRE_PROD == true
-                    }
+		     branch 'master'
                 }
                 steps {
                         timeout(time:5, unit:'MINUTES') {
@@ -87,9 +84,7 @@ pipeline {
         }
         stage('Deploy - PROD'){
                 when {
-                    expression {
-                        params.DEPLOY_TO_PRD == true
-                    }
+		     branch 'master'
                 }
                 steps {
                         timeout(time:5, unit:'MINUTES') {
