@@ -118,6 +118,5 @@ pipeline {
         options {
             gitLabConnection('GitLab')
             buildDiscarder(logRotator(numToKeepStr: '5'))
-            timestamps()
         }
     }
