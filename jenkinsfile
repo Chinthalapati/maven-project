@@ -36,7 +36,6 @@ pipeline {
         stage('Deploy to Artifactory'){
                 steps {
                     echo 'Deploy to Artifactory'
-		    sh 'mvn deploy'
                 }
             }
         stage('Deploy - REL'){
@@ -47,6 +46,7 @@ pipeline {
                 }
                 steps {
                     echo 'Deployment to REL environment!'
+		    build job 'deploy-to-staging'
                 }
         }
         stage('Deploy - FST'){
