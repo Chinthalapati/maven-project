@@ -95,7 +95,14 @@ pipeline {
                         echo 'Deployment to PRD environment!'
                 }
         }
-
+	stage('Tag git repo'){
+		when {
+			branch 'master'
+		}
+		steps {
+		    sh 'mvn deploy scm:tag -Drevision=$BUILD_TAG'
+		}
+	}
     }
     post {
         failure {
