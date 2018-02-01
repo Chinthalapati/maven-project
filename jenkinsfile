@@ -1,40 +1,39 @@
 pipeline {
-
     agent any 
-
+    
     stages {
-
         stage('Build Package') {
-
             steps {
                 echo 'Build phase!'
             }
-            stage('Test') {
+        }
+        stage('Test') {
                 failFast true
                 parallel {
-                    stage('Unit Test') {
+            
+                stage('Unit Test') {
                         steps {
                         echo 'Unit Test!!!'
                         }
                     }
-                    stage('Integration Tests!') {
+                stage('Integration Tests!') {
                         steps {
                             echo 'Integration Tests!!!'
                         }
-                    }
                 }
             }
-            stage('Static Analysis'){
+        }
+        stage('Static Analysis'){
                 steps {
                     echo 'Static Analysis'
                 }
             }
-            stage('Deploy to Artifactory'){
+        stage('Deploy to Artifactory'){
                 steps {
                     echo 'Deploy to Artifactory'
                 }
             }
-            stage('Deploy - REL'){
+        stage('Deploy - REL'){
                 when {
                     expression {
                         params.DEPLOY_TO_REL == true
@@ -43,8 +42,8 @@ pipeline {
                 steps {
                     echo 'Deployment to REL environment!'
                 }
-            }
-            stage('Deploy - FST'){
+        }
+        stage('Deploy - FST'){
                 when {
                     expression {
                         params.DEPLOY_TO_FST == true
@@ -56,8 +55,8 @@ pipeline {
                         }
                         echo 'Deployment to FST environment!'
                 }
-            }
-            stage('Deploy - IST'){
+        }
+        stage('Deploy - IST'){
                 when {
                     expression {
                         params.DEPLOY_TO_IST == true
@@ -69,8 +68,8 @@ pipeline {
                         }
                         echo 'Deployment to IST environment!'
                 }
-            }
-            stage('Deploy - PRE_PROD'){
+        }
+        stage('Deploy - PRE_PROD'){
                 when {
                     expression {
                         params.DEPLOY_TO_PRE_PROD == true
@@ -82,8 +81,8 @@ pipeline {
                         }
                         echo 'Deployment to PRE_PROD environment!'
                 }
-            }
-            stage('Deploy - PROD'){
+        }
+        stage('Deploy - PROD'){
                 when {
                     expression {
                         params.DEPLOY_TO_PRD == true
@@ -95,17 +94,17 @@ pipeline {
                         }
                         echo 'Deployment to PRD environment!'
                 }
-            }
+        }
 
-            }
-        post {
-            failure {
+    }
+    post {
+        failure {
                 updateGitlabCommitStatus name: 'build', state: 'failed'
             }
-            success {
+        success {
                 updateGitlabCommitStatus name: 'build', state: 'success'
             }
-            always {
+        always {
                 archive '**/target/**/*'
                 junit(allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml')
             }
@@ -122,4 +121,3 @@ pipeline {
             timestamps()
         }
     }
-}       
