@@ -4,41 +4,122 @@ pipeline {
 
     stages {
 
-        stage('Build') {
+        stage('Build Package') {
 
             steps {
                 echo 'Build phase!'
             }
-            post {
-                success {
-                    echo 'Now Archiving...'
-                    archiveArtifacts artifacts: '**/target/*.war'
+            stage('Test') {
+                failFast true
+                parallel {
+                    stage('Unit Test') {
+                        steps {
+                        echo 'Unit Test!!!'
+                        }
+                    }
+                    stage('Integration Tests!') {
+                        steps {
+                            echo 'Integration Tests!!!'
+                        }
+                    }
                 }
             }
-        }
-        stage('Deploy to Stage') {
-            steps {
-                build job: 'deploy-to-staging'
-            }
-        }
-        stage('Deploy to Production') {
-            steps {
-                timeout(time:1, unit:'DAYS'){
-                    input message:'Approve PROD Deployment'
+            stage('Static Analysis'){
+                steps {
+                    echo 'Static Analysis'
                 }
-                build job: 'Deploy-to-Prod'
+            }
+            stage('Deploy to Artifactory'){
+                steps {
+                    echo 'Deploy to Artifactory'
+                }
+            }
+            stage('Deploy - REL'){
+                when {
+                    expression {
+                        params.DEPLOY_TO_REL == true
+                    }
+                }
+                steps {
+                    echo 'Deployment to REL environment!'
+                }
+            }
+            stage('Deploy - FST'){
+                when {
+                    expression {
+                        params.DEPLOY_TO_FST == true
+                    }
+                }
+                steps {
+                        timeout(time:5, unit:'MINUTES') {
+                        input message:'Approve FST Deployment?'
+                        }
+                        echo 'Deployment to FST environment!'
+                }
+            }
+            stage('Deploy - IST'){
+                when {
+                    expression {
+                        params.DEPLOY_TO_IST == true
+                    }
+                }
+                steps {
+                        timeout(time:5, unit:'MINUTES') {
+                        input message:'Approve IST Deployment?'
+                        }
+                        echo 'Deployment to IST environment!'
+                }
+            }
+            stage('Deploy - PRE_PROD'){
+                when {
+                    expression {
+                        params.DEPLOY_TO_PRE_PROD == true
+                    }
+                }
+                steps {
+                        timeout(time:5, unit:'MINUTES') {
+                        input message:'Approve PRE_PROD Deployment?'
+                        }
+                        echo 'Deployment to PRE_PROD environment!'
+                }
+            }
+            stage('Deploy - PROD'){
+                when {
+                    expression {
+                        params.DEPLOY_TO_PRD == true
+                    }
+                }
+                steps {
+                        timeout(time:5, unit:'MINUTES') {
+                        input message:'Approve PRD Deployment?'
+                        }
+                        echo 'Deployment to PRD environment!'
+                }
+            }
 
-                post {
-                    success {
-                        echo 'Code deployment Successful'
-                    }
-                    failure {
-                        echo 'Deployment failed!!!'
-                    }
-                }
+            }
+        post {
+            failure {
+                updateGitlabCommitStatus name: 'build', state: 'failed'
+            }
+            success {
+                updateGitlabCommitStatus name: 'build', state: 'success'
+            }
+            always {
+                archive '**/target/**/*'
+                junit(allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml')
             }
         }
-    
+        parameters {
+            booleanParam(name: 'DEPLOY_TO_REL', defaultValue:false, description: 'Tick this box to deploy the build artefacts to REL Environment')
+        }
+        triggers {
+            gitlab(triggerOnPush:true, triggerOnMergeRequest:true, branchFilterType:'All')
+        }
+        options {
+            gitLabConnection('GitLab')
+            buildDiscarder(logRotator(numToKeepStr: '5'))
+            timestamps()
+        }
     }
-
-}
+}       
